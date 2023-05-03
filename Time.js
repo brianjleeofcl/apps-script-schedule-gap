@@ -1,25 +1,50 @@
-const WORKDAY = {
-  start: 8,
-  end: 17,
+const WEEK = {
+  sun: 0,
+  mon: 1,
+  tue: 2,
+  wed: 3,
+  thu: 4,
+  fri: 5,
+  sat: 6,
+}
+
+class Workday {
+  constructor(date) {
+    const day = date.getDay();
+
+    switch (day) {
+      case WEEK.fri:
+        this.start = 8
+        this.end = 15
+        break
+      default:
+        this.start = 8
+        this.end = 17
+    }
+  }
 }
 
 function isTimeBeforeWork(time) {
-  return time.getHours() < WORKDAY.start || time.getHours() === WORKDAY.start && time.getMinutes() === 0
+  const day = new Workday(time.getDay())
+  return time.getHours() < day.start || time.getHours() === day.start && time.getMinutes() === 0
 }
 
 function isTimeAfterWork(time) {
-  return time.getHours() > WORKDAY.end || time.getHours() === WORKDAY.end && time.getMinutes() === 0
+  const day = new Workday(time.getDay())
+  return time.getHours() > day.end || time.getHours() === day.end && time.getMinutes() === 0
 }
 
 function getWorkStart(date) {
   const newDate = new Date(date.valueOf())
-  setTime(newDate, WORKDAY.start)
+  const day = new Workday(date.getDay())
+  setTime(newDate, day.start)
   return newDate
 }
 
 function getWorkEnd(date) {
   const newDate = new Date(date.valueOf())
-  setTime(newDate, WORKDAY.end)
+  const day = new Workday(date.getDay())
+  setTime(newDate, day.end)
   return newDate
 }
 
@@ -34,7 +59,7 @@ class TimeInterval {
     }
     this.start = start;
     this.end = end;
-    
+
     this.intraDay = start.getFullYear() === end.getFullYear()
       && start.getMonth() === end.getMonth()
       && start.getDate() === end.getDate()
