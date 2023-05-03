@@ -1,0 +1,27 @@
+{
+  "name": "schedule-gap",
+  "version": "1.0.0",
+  "description": "apps-script app for google calendar",
+  "main": "code.gs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clasp": "clasp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brianjleeofcl/apps-script-schedule-gap.git"
+  },
+  "keywords": [
+    "apps-script",
+    "schedule"
+  ],
+  "author": "Brian Lee <brianjleeofcl@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brianjleeofcl/apps-script-schedule-gap/issues"
+  },
+  "homepage": "https://github.com/brianjleeofcl/apps-script-schedule-gap#readme",
+  "devDependencies": {
+    "@google/clasp": "^2.4.2"
+  }
+}
