@@ -5,7 +5,10 @@
   "main": "code.gs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "clasp": "clasp"
+    "clasp": "clasp",
+    "login": "clasp login -A ./.clasprc.json",
+    "pull": "clasp pull -A ./.clasprc.json",
+    "push": "clasp push -A ./.clasprc.json"
   },
   "repository": {
     "type": "git",

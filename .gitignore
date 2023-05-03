@@ -1,5 +1,9 @@
 # dependencies
 **/node_modules
 
+#auth
+.clasprc.json
+.clasp.json
+
 # misc
 .DS_Store
