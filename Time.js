@@ -25,25 +25,25 @@ class Workday {
 }
 
 function isTimeBeforeWork(time) {
-  const day = new Workday(time.getDay())
+  const day = new Workday(time)
   return time.getHours() < day.start || time.getHours() === day.start && time.getMinutes() === 0
 }
 
 function isTimeAfterWork(time) {
-  const day = new Workday(time.getDay())
+  const day = new Workday(time)
   return time.getHours() > day.end || time.getHours() === day.end && time.getMinutes() === 0
 }
 
 function getWorkStart(date) {
   const newDate = new Date(date.valueOf())
-  const day = new Workday(date.getDay())
+  const day = new Workday(date)
   setTime(newDate, day.start)
   return newDate
 }
 
 function getWorkEnd(date) {
   const newDate = new Date(date.valueOf())
-  const day = new Workday(date.getDay())
+  const day = new Workday(date)
   setTime(newDate, day.end)
   return newDate
 }
