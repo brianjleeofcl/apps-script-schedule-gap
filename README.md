@@ -12,7 +12,7 @@ Because this application uses the source calendar as a read-only input by design
 
 The consequence of this setup is the inversion of CI/CD flow; it is often much easier to develop/test features and fixes on the production instance (i.e. the only instance), and then pull down the changes to the repository and commit code changes post facto. The general lack of `git` commits here is a reflection of this.
 
-### Using Clasp
+### Using `clasp`
 
 This project uses Apps Script CLI: `clasp`.
 
