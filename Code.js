@@ -1,124 +1,63 @@
 function runCode() {
   const sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets();
-  for (let sheet of sheets) {
-    updateSheet(sheet)
-  }
+
+  Promise.all(sheets.map(sheet => updateSheet(sheet)));  
+}
+
+function prepareBlankSheet(sheet) {
+  sheet.clear()
+  sheet.setColumnWidth(2, 360)
+  sheet.setColumnWidth(3, 360)
+  sheet.setColumnWidth(4, 360)
+  writeMessageOnA1(sheet, 'Starting script execution')
 }
 
 function updateSheet(sheet) {
-  const name = sheet.getName()
-  sheet.clear()
-  let input;
-  try {
-    input = parseSheetName(name)
-  } catch(er) {
-    writeMessageOnA1(sheet, er.message)
-    return
-  }
+  return new Promise(res => res(prepareBlankSheet(sheet)))
+    .then(() => parseSheetName(sheet.getName()))
+    .then(input => {
+        range = dateRangeFormat.formatRange(input.start, input.end)
+        writeMessageOnA1(sheet, `Looking up schedule for ${range}`)
+        const getDailySchedule = DailySchedule.fromCalendar(CalendarApp.getCalendarById(input.id))
+        const days = formDateArray(input.start, input.end)
 
-  const dayProcessor = getDayProcessor(input)
- 
-  const days = formDateArray(input.start, input.end)
-  const availabilities = [];
-  for (let day of days) {
-    const availability = dayProcessor(day)
-    if (!availability) continue
-    availabilities.push([dateFormat.format(day), availability])
-  }
-
-  if (!availabilities.length) {
-    writeMessageOnA1(sheet, 'No Availabilities Found')
-  }
-
-  const selection = sheet.setActiveSelection(`A1:B${availabilities.length}`)
-  selection.setValues(availabilities)
-}
-
-function getDayProcessor(input) {
-  const cal = CalendarApp.getCalendarById(input.id)
-  return function(day) {
-    const allEvents = cal.getEventsForDay(day)
-
-    const travel = allEvents.filter(event => event.isAllDayEvent() 
-      && event.getDescription().match(new RegExp('travel')))
-
-    if (travel.length > 0) {
-      return
-    }
-
-    const boundedEvents = allEvents.filter(event => !event.isAllDayEvent() 
-      && !isTimeBeforeWork(event.getEndTime())
-      && !isTimeAfterWork(event.getStartTime()));
-
-    const notAvailable = [];
-    const notConsidered = [];
-    for (let event of boundedEvents) {
-      const title = event.getTitle()
-      if (checkAvailableCodeword(title)) {
-        notConsidered.push(title)
-      } else {
-        notAvailable.push(TimeInterval.fromEvent(event))
-      }
-    }
-
-    notAvailable.sort((a, b) => {
-      return a.start.valueOf() === b.start.valueOf() 
-        ? a.end.valueOf() - b.end.valueOf() 
-        : a.start.valueOf() - b.start.valueOf()
-      })
-
-    let pointerInterval = null;
-    let merged = [];
-    for (let event of notAvailable) {
-      if (!pointerInterval) {
-        pointerInterval = event;
-        continue;
-      }         
-      
-      if (!pointerInterval.isTimeInInterval(event.start)) {
-        merged.push(pointerInterval);
-        pointerInterval = event
-      } else {
-        if (!pointerInterval.isTimeInInterval(event.end)) {
-          pointerInterval.end = event.end
-        }
-      }
-    }
-    merged.push(pointerInterval)
-
-    const gaps = [...new Array(merged.length - 1)].map((_, i) => {
-      return new TimeInterval(merged[i].end, merged[i + 1].start)
+        return Promise.all(days.map(date => getDailySchedule(date).then(schedule => schedule.filterByLength(input.interval))))
     })
+    .then(schedules => schedules.filter(schedule => !schedule.skip))
+    .then(available => {
+      if (!available.length) throw new Error('No Availabilities Found')
 
-    const firstStart = notAvailable[0].start
-    if (!isTimeBeforeWork(firstStart)) {
-      gaps.unshift(new TimeInterval(getWorkStart(day), firstStart))
-    }
-    const lastEnd = notAvailable[notAvailable.length - 1].end
-    if (!isTimeAfterWork(lastEnd)) {
-      gaps.push(new TimeInterval(lastEnd, getWorkEnd(day)))     
-    }
-
-    const canMeet = gaps.filter(interval => interval.getMinutes() >= input.interval)
-
-    return canMeet.map(interval => interval.printTimeRange()).join('; ')
-  }
+      sheet.setActiveSelection(`A1:D1`).setValues([[range, 'Pacific', 'Eastern', 'Central']])
+      sheet.setActiveSelection(`A2:D${available.length + 1}`)
+        .setValues(available.map(schedule => schedule.printAvailabilityInAllTZ()))
+    })
+    .catch(err => {
+      console.error(err)
+      writeMessageOnA1(sheet, err.message)
+    })
 }
-
 
 function formDateArray(start, end) {
+  const holidays = getHolidays(start, end)
   const endMonth = end.getMonth()
   const endDate = end.getDate()
   const row = []
   let pointer = new Date(start)
   while (pointer.getMonth() !== endMonth || pointer.getDate() !== endDate) {
     const day = pointer.getDay()
-    if (day !== 0 && day !== 6) {
+    if (day !== 0 && day !== 6 ) {
       row.push(new Date(pointer))
     }
     pointer.setDate(pointer.getDate() + 1)
   }
   return row
+}
+
+function getHolidays(start, end) {
+  const holidayCalendar = CalendarApp.getCalendarsByName('UW Seattle Academic Calendar|Holidays')[0]
+  const holidays = holidayCalendar.getEvents(start, end).map(event => event.getStartTime())
+  // console.log(holidays)
+  return []
 }
 
 function writeMessageOnA1(sheet, message) {
@@ -160,4 +99,3 @@ function parseDate(date) {
   setTime(generatedDate)
   return generatedDate
 }
-

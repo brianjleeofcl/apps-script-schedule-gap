@@ -1,64 +1,21 @@
-const WEEK = {
-  sun: 0,
-  mon: 1,
-  tue: 2,
-  wed: 3,
-  thu: 4,
-  fri: 5,
-  sat: 6,
-}
-
-class Workday {
-  constructor(date) {
-    const day = date.getDay();
-
-    switch (day) {
-      case WEEK.fri:
-        this.start = 8
-        this.end = 15
-        break
-      default:
-        this.start = 8
-        this.end = 17
-    }
-  }
-}
-
-function isTimeBeforeWork(time) {
-  const day = new Workday(time)
-  return time.getHours() < day.start || time.getHours() === day.start && time.getMinutes() === 0
-}
-
-function isTimeAfterWork(time) {
-  const day = new Workday(time)
-  return time.getHours() > day.end || time.getHours() === day.end && time.getMinutes() === 0
-}
-
-function getWorkStart(date) {
-  const newDate = new Date(date.valueOf())
-  const day = new Workday(date)
-  setTime(newDate, day.start)
-  return newDate
-}
-
-function getWorkEnd(date) {
-  const newDate = new Date(date.valueOf())
-  const day = new Workday(date)
-  setTime(newDate, day.end)
-  return newDate
-}
-
 class TimeInterval {
   static fromEvent(event) {
     return new TimeInterval(event.getStartTime(), event.getEndTime())
   }
 
   constructor(start, end) {
+    if (!(start instanceof Date) || !(end instanceof Date)) {
+      throw new Error("Input Error: start and end time must be an instance of Date")
+    }
     if (start.valueOf() > end.valueOf()) {
       throw new Error("Input Error: end time cannot be before start")
     }
     this.start = start;
     this.end = end;
+
+    if (!start) {
+      debugger
+    }
 
     this.intraDay = start.getFullYear() === end.getFullYear()
       && start.getMonth() === end.getMonth()
@@ -79,25 +36,34 @@ class TimeInterval {
     return this.end.getHours() < this.start || this.start.getHours() >= this.end
   }
 
-  printTimeRange() {
-    return timeRangeFormat.formatRange(this.start, this.end)
+  printTimeRange(format) {
+    return format.formatRange(this.start, this.end)
   }
 }
 
-const timeRangeFormat = Intl.DateTimeFormat('en', {
-  hour: 'numeric',
-  minute: 'numeric',
-})
+const TRBaseFormat = {
+    hour: 'numeric',
+    minute: 'numeric',
+}
 
-const dateFormat = Intl.DateTimeFormat('en', {
-  weekday: 'short',
+const timeRangeFormat = {
+  pt: Intl.DateTimeFormat('en', {...TRBaseFormat, timeZone: 'US/Pacific'}),
+  mt: Intl.DateTimeFormat('en', {...TRBaseFormat, timeZone: 'US/Mountain'}),
+  ct: Intl.DateTimeFormat('en', {...TRBaseFormat, timeZone: 'US/Central'}),
+  et: Intl.DateTimeFormat('en', {...TRBaseFormat, timeZone: 'US/Eastern'}),
+}
+
+const dateRangeFormat = Intl.DateTimeFormat('en', {
+  year: 'numeric',
   month: 'numeric',
   day: 'numeric',
 })
 
-function setTime(date, hour, min, sec) {
-  date.setHours(hour || 0)
-  date.setMinutes(min || 0)
-  date.setSeconds(sec || 0)
+function getDate(date) {
+
+}
+
+function setTime(date, hour, min) {
+  date.setHours(hour || 0, min ||0, 0)
 }
 
